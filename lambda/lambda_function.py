@@ -28,7 +28,7 @@ def lambda_handler(event, context):
     print(speech)
 
     ## S3に音声をアップロードする
-    response = upload_speech(key, speech)
+    response = upload_speech(key, speech, image_desc)
     return response
 
 def get_s3_object(bucket, key):
@@ -76,12 +76,16 @@ def text_to_speech(text):
         print('Error synthesizing to speech: "{}"'.format(text))
         raise e
 
-def upload_speech(key, speech):
+def upload_speech(key, speech, description):
     try:
         upload_bucket = 'voiceoutnv.rshd'
         # TODO: バイト列ではなくStreamingBodyをもっとスマートに渡せるのではなかろうか？
         response = s3.put_object(Bucket=upload_bucket, Key=key+'.mp3',
-                                 Body=speech['AudioStream'].read())
+                                 Body=speech['AudioStream'].read(),
+                                 ContentType='audio/mpeg',
+                                 Metadata={
+                                     'Description': description
+                                 })
         return response
     except Exception as e:
         print(e)
