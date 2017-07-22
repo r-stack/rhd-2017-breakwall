@@ -10,11 +10,15 @@ rekognition = boto3.client('rekognition')
 
 def lambda_handler(event, context):
     print("Received event: " + json.dumps(event, indent=2))
+    ## S3オブジェクトを取得する
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
     s3obj = get_s3_object(bucket, key)
-    print(s3obj)
-    return s3obj['ContentType']
+    #print(s3obj)
+
+    ## Rekognitionでラベルを検出する
+    # TODO s3オブジェクトが画像じゃなかったらエラーにする
+    rekog_labels = recognize_image_labels(bucket, key)
 
 def get_s3_object(bucket, key):
     try:
@@ -23,4 +27,20 @@ def get_s3_object(bucket, key):
     except Exception as e:
         print(e)
         print('Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.'.format(key, bucket))
+        raise e
+
+def recognize_image_labels(bucket, key):
+    try:
+        labels = rekognition.detect_labels(
+            Image={
+                'S3Object': {
+                    'Bucket': bucket,
+                    'Name': key
+                }
+            }
+        )
+        return labels
+    except Exception as e:
+        print(e)
+        print('Error detecting labels {} from bucket {}.'.format(key, bucket))
         raise e
