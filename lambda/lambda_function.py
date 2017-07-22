@@ -10,14 +10,13 @@ rekognition = boto3.client('rekognition')
 
 def lambda_handler(event, context):
     print("Received event: " + json.dumps(event, indent=2))
-    s3obj = get_s3_object(event)
+    bucket = event['Records'][0]['s3']['bucket']['name']
+    key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
+    s3obj = get_s3_object(bucket, key)
     print(s3obj)
     return s3obj['ContentType']
 
-def get_s3_object(event):
-    # Get the object from the event and show its content type
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
+def get_s3_object(bucket, key):
     try:
         response = s3.get_object(Bucket=bucket, Key=key)
         return response
