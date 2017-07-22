@@ -25,7 +25,11 @@ def lambda_handler(event, context):
 
     ## Pollyでテキストから音声を合成する
     speech = text_to_speech(image_desc)
-    return 'Content-Type:{},Characters:{}'.format(speech['ContentType'], speech['RequestCharacters'])
+    print(speech)
+
+    ## S3に音声をアップロードする
+    response = upload_speech(key, speech)
+    return response
 
 def get_s3_object(bucket, key):
     try:
@@ -72,3 +76,14 @@ def text_to_speech(text):
         print('Error synthesizing to speech: "{}"'.format(text))
         raise e
 
+def upload_speech(key, speech):
+    try:
+        upload_bucket = 'voiceoutnv.rshd'
+        # TODO: バイト列ではなくStreamingBodyをもっとスマートに渡せるのではなかろうか？
+        response = s3.put_object(Bucket=upload_bucket, Key=key+'.mp3',
+                                 Body=speech['AudioStream'].read())
+        return response
+    except Exception as e:
+        print(e)
+        print('Error uploading speech "{}".'.format(key))
+        raise e
