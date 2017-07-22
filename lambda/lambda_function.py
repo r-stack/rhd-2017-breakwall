@@ -19,6 +19,7 @@ def lambda_handler(event, context):
     ## Rekognitionでラベルを検出する
     # TODO s3オブジェクトが画像じゃなかったらエラーにする
     rekog_labels = recognize_image_labels(bucket, key)
+    return image_description(rekog_labels)
 
 def get_s3_object(bucket, key):
     try:
@@ -44,3 +45,8 @@ def recognize_image_labels(bucket, key):
         print(e)
         print('Error detecting labels {} from bucket {}.'.format(key, bucket))
         raise e
+
+### 画像に対するラベルから画像の説明文を生成する。
+def image_description(labels):
+    top3_labels = [label['Name'] for label in labels['Labels'][:3]]
+    return 'This image shows {}.'.format(', '.join(top3_labels))
